@@ -2,7 +2,9 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 var fs = require("fs");
 var path = require("path");
+var child_process_1 = require("child_process"); // Import exec to run shell commands
 var date_fns_tz_1 = require("date-fns-tz");
+// Modify logEvent function to include notification
 var logEvent = function (type) {
     var logFilePath = path.join(__dirname, 'attendance.json');
     var groupedEvents = {};
@@ -16,7 +18,6 @@ var logEvent = function (type) {
     // Get current date and time adjusted to UTC-3
     var timeZone = 'Etc/GMT+3'; // UTC-3 time zone
     var now = new Date();
-    // Format the timestamp in ISO 8601 format with the correct time zone offset using formatInTimeZone
     var timestamp = (0, date_fns_tz_1.formatInTimeZone)(now, timeZone, "yyyy-MM-dd'T'HH:mm:ssXXX");
     // Extract date components from the now date
     var year = now.getFullYear().toString();
@@ -45,14 +46,14 @@ var logEvent = function (type) {
     dayData.totalHours = calculateDailyWorkHours(dayData.events);
     // Write the updated data back to the file
     fs.writeFileSync(logFilePath, JSON.stringify(groupedEvents, null, 2));
+    // Send a notification to the user
+    sendNotification(type);
 };
 // Function to calculate total hours worked in a day and format as 'HH:mm'
 var calculateDailyWorkHours = function (events) {
     var totalMilliseconds = 0;
-    // Explicitly define currentState type
     var currentState = 'inactive';
     var lastEventTime = null;
-    // Sort events by timestamp
     events.sort(function (a, b) { return new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime(); });
     for (var i = 0; i < events.length; i++) {
         var entry = events[i];
@@ -71,26 +72,45 @@ var calculateDailyWorkHours = function (events) {
             }
         }
     }
-    // If still active after all events, consider current time as shutdown time
     if (currentState === 'active' && lastEventTime) {
         var now = new Date();
         totalMilliseconds += now.getTime() - lastEventTime.getTime();
     }
-    // Convert total milliseconds to hours and minutes
     var totalMinutes = Math.floor(totalMilliseconds / (1000 * 60));
-    var hours = Math.floor(totalMinutes / 60)
-        .toString()
-        .padStart(2, '0');
+    var hours = Math.floor(totalMinutes / 60).toString().padStart(2, '0');
     var minutes = (totalMinutes % 60).toString().padStart(2, '0');
-    // Return the total hours in 'HH:mm' format
     return "".concat(hours, ":").concat(minutes);
+};
+// Function to send desktop notifications using notify-send
+var sendNotification = function (eventType) {
+    var message;
+    switch (eventType) {
+        case 'startup':
+            message = 'System has started up.';
+            break;
+        case 'shutdown':
+            message = 'System is shutting down.';
+            break;
+        case 'screenLock':
+            message = 'Screen has been locked.';
+            break;
+        case 'screenUnlock':
+            message = 'Screen has been unlocked.';
+            break;
+        default:
+            message = 'Unknown event occurred.';
+            break;
+    }
+    // Use exec to run the notify-send command
+    (0, child_process_1.exec)("notify-send \"Event Logged\" \"".concat(message, "\""), function (error) {
+        if (error) {
+            console.error('Error sending notification:', error);
+        }
+    });
 };
 // Get the event type from command-line arguments
 var eventType = process.argv[2];
-if (eventType === 'startup' ||
-    eventType === 'shutdown' ||
-    eventType === 'screenLock' ||
-    eventType === 'screenUnlock') {
+if (eventType === 'startup' || eventType === 'shutdown' || eventType === 'screenLock' || eventType === 'screenUnlock') {
     logEvent(eventType);
 }
 else {

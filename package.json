@@ -12,6 +12,7 @@
   "license": "ISC",
   "description": "",
   "devDependencies": {
+    "@types/cors": "^2.8.17",
     "@types/express": "^4.17.13",
     "@types/node": "^22.7.4",
     "nodemon": "^3.1.7",
@@ -19,6 +20,7 @@
     "typescript": "^5.6.2"
   },
   "dependencies": {
+    "cors": "^2.8.5",
     "date-fns": "^4.1.0",
     "date-fns-tz": "^3.2.0",
     "dbus-next": "^0.10.2",

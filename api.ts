@@ -1,10 +1,8 @@
-// server.ts
-
 import express from 'express';
+import cors from 'cors'; // Importing cors
 import * as fs from 'fs';
 import * as path from 'path';
 import type { Request, Response } from 'express';
-
 
 interface LogEntry {
     timestamp: string;
@@ -38,6 +36,9 @@ interface RequestQuery {
 const app = express();
 const PORT = 3000;
 
+// Enable CORS for all routes
+app.use(cors());
+
 // Helper function to read attendance data
 const readAttendanceData = (): GroupedEvents => {
     const logFilePath = path.join(__dirname, 'attendance.json');
@@ -52,6 +53,8 @@ const readAttendanceData = (): GroupedEvents => {
     return groupedEvents;
 };
 
+
+// Helper function to read attendance data
 // Endpoint to get all events
 app.get('/events', (req: Request<RequestParams, ResponseBody, RequestBody, RequestQuery>, res) => {
     const { startDate, endDate } = req.query;
@@ -73,9 +76,7 @@ app.get('/events', (req: Request<RequestParams, ResponseBody, RequestBody, Reque
             return res.status(400).json({ error: 'startDate must be before or equal to endDate.' });
         }
 
-        console.log('filtrado');
-
-        const filteredEvents: { [date: string]: DayData } = {};
+        const filteredEvents: GroupedEvents = {};
 
         for (const year in groupedEvents) {
             for (const month in groupedEvents[year]) {
@@ -84,8 +85,15 @@ app.get('/events', (req: Request<RequestParams, ResponseBody, RequestBody, Reque
                     const currentDate = new Date(currentDateStr);
 
                     if (currentDate >= start && currentDate <= end) {
-                        const key = currentDateStr;
-                        filteredEvents[key] = groupedEvents[year][month][day];
+                        // Ensure year, month, and day structure exists
+                        if (!filteredEvents[year]) {
+                            filteredEvents[year] = {};
+                        }
+                        if (!filteredEvents[year][month]) {
+                            filteredEvents[year][month] = {};
+                        }
+
+                        filteredEvents[year][month][day] = groupedEvents[year][month][day];
                     }
                 }
             }
@@ -101,6 +109,7 @@ app.get('/events', (req: Request<RequestParams, ResponseBody, RequestBody, Reque
         return res.json(groupedEvents);
     }
 });
+
 
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);

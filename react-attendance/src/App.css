@@ -1,0 +1,42 @@
+.root {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background-color: #121212;
+}
+
+.app-container {
+  background-color: #1e1e1e;
+  padding: 2rem;
+  border-radius: 8px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+  color: #fff;
+}
+
+.MuiButton-containedPrimary {
+  background-color: #2196f3;
+}
+
+.MuiTextField-root {
+  background-color: #333;
+  border-radius: 4px;
+}
+
+.table-container {
+  max-height: 800px;
+  /* Set this to the desired height for scrollability */
+  overflow-y: auto;
+  /* Enable vertical scrolling */
+}
+
+.MuiTableCell-head {
+  background-color: #333;
+  /* Darker background for the header in dark theme */
+  color: #fff;
+  /* White text color for contrast */
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  /* Ensure it stays above table rows */
+}

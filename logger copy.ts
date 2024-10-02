@@ -1,9 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import { exec } from 'child_process'; // Import exec to run shell commands
 import { formatInTimeZone } from 'date-fns-tz';
 
-// Existing interfaces
 interface LogEntry {
     timestamp: string;
     type: 'startup' | 'shutdown' | 'screenLock' | 'screenUnlock';
@@ -22,9 +20,9 @@ interface GroupedEvents {
     };
 }
 
-// Modify logEvent function to include notification
 const logEvent = (type: 'startup' | 'shutdown' | 'screenLock' | 'screenUnlock') => {
     const logFilePath = path.join(__dirname, 'attendance.json');
+
     let groupedEvents: GroupedEvents = {};
 
     // Read existing data if the file exists
@@ -38,6 +36,8 @@ const logEvent = (type: 'startup' | 'shutdown' | 'screenLock' | 'screenUnlock') 
     // Get current date and time adjusted to UTC-3
     const timeZone = 'Etc/GMT+3'; // UTC-3 time zone
     const now = new Date();
+
+    // Format the timestamp in ISO 8601 format with the correct time zone offset using formatInTimeZone
     const timestamp = formatInTimeZone(now, timeZone, "yyyy-MM-dd'T'HH:mm:ssXXX");
 
     // Extract date components from the now date
@@ -74,18 +74,20 @@ const logEvent = (type: 'startup' | 'shutdown' | 'screenLock' | 'screenUnlock') 
 
     // Write the updated data back to the file
     fs.writeFileSync(logFilePath, JSON.stringify(groupedEvents, null, 2));
-
-    // Send a notification to the user
-    sendNotification(type);
 };
 
 // Function to calculate total hours worked in a day and format as 'HH:mm'
 const calculateDailyWorkHours = (events: LogEntry[]): string => {
     let totalMilliseconds = 0;
+    // Explicitly define currentState type
     let currentState: 'active' | 'inactive' = 'inactive';
     let lastEventTime: Date | null = null;
 
-    events.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+    // Sort events by timestamp
+    events.sort(
+        (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+    );
+
 
     for (let i = 0; i < events.length; i++) {
         const entry = events[i];
@@ -105,50 +107,32 @@ const calculateDailyWorkHours = (events: LogEntry[]): string => {
         }
     }
 
+    // If still active after all events, consider current time as shutdown time
     if (currentState === 'active' && lastEventTime) {
         const now = new Date();
         totalMilliseconds += now.getTime() - lastEventTime.getTime();
     }
 
+    // Convert total milliseconds to hours and minutes
     const totalMinutes = Math.floor(totalMilliseconds / (1000 * 60));
-    const hours = Math.floor(totalMinutes / 60).toString().padStart(2, '0');
+    const hours = Math.floor(totalMinutes / 60)
+        .toString()
+        .padStart(2, '0');
     const minutes = (totalMinutes % 60).toString().padStart(2, '0');
+
+    // Return the total hours in 'HH:mm' format
     return `${hours}:${minutes}`;
-};
-
-// Function to send desktop notifications using notify-send
-const sendNotification = (eventType: 'startup' | 'shutdown' | 'screenLock' | 'screenUnlock') => {
-    let message: string;
-    switch (eventType) {
-        case 'startup':
-            message = 'System has started up.';
-            break;
-        case 'shutdown':
-            message = 'System is shutting down.';
-            break;
-        case 'screenLock':
-            message = 'Screen has been locked.';
-            break;
-        case 'screenUnlock':
-            message = 'Screen has been unlocked.';
-            break;
-        default:
-            message = 'Unknown event occurred.';
-            break;
-    }
-
-    // Use exec to run the notify-send command
-    exec(`notify-send  -t 5000 "Event Logged" "${message}"`, (error) => {
-        if (error) {
-            console.error('Error sending notification:', error);
-        }
-    });
 };
 
 // Get the event type from command-line arguments
 const eventType = process.argv[2] as 'startup' | 'shutdown' | 'screenLock' | 'screenUnlock';
 
-if (eventType === 'startup' || eventType === 'shutdown' || eventType === 'screenLock' || eventType === 'screenUnlock') {
+if (
+    eventType === 'startup' ||
+    eventType === 'shutdown' ||
+    eventType === 'screenLock' ||
+    eventType === 'screenUnlock'
+) {
     logEvent(eventType);
 } else {
     console.error('Invalid event type. Use "startup", "shutdown", "screenLock", or "screenUnlock".');
