@@ -1,0 +1,11 @@
+[Unit]
+Description=Run logger.js at user login and logout
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/home/felipemiranda/.nvm/versions/node/v20.17.0/bin/node /home/felipemiranda/dev/github/fcmiranda/clock-in-clock-out/logger.js startup
+ExecStop=/home/felipemiranda/.nvm/versions/node/v20.17.0/bin/node /home/felipemiranda/dev/github/fcmiranda/clock-in-clock-out/logger.js shutdown
+
+[Install]
+WantedBy=default.target

@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Application
+Name=Screen Lock Listener
+Exec=/home/felipemiranda/.nvm/versions/node/v20.17.0/bin/node /home/felipemiranda/dev/github/fcmiranda/clock-in-clock-out/screen-lock-listener.js
+Terminal=false
+Categories=Utility;Development;
+StartupNotify=true
